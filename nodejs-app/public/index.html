@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleFinder - Fashion Discovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .app-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        .header {
+            padding: 25px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 20, 147, 0.1) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #FFD700, #FF1493, #00CED1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .tagline {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 300;
+            color: #E6E6FA;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 14px 8px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: #B8B8D4;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #FF1493, #00CED1);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 20, 147, 0.3);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .content {
+            padding: 25px;
+            min-height: 400px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .outfit-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 0;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .outfit-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .outfit-image {
+            width: 100%;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .outfit-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.6) 100%);
+        }
+
+        .outfit-content {
+            padding: 20px;
+        }
+
+        .outfit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .outfit-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .price {
+            font-size: 18px;
+            color: #FFD700;
+            font-weight: 800;
+        }
+
+        .outfit-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            text-align: center;
+            color: #E6E6FA;
+            font-weight: 500;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #B8B8D4;
+        }
+
+        .stars {
+            color: #FFD700;
+            font-size: 16px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 18px 24px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #FF1493;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 20px rgba(255, 20, 147, 0.2);
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .chip {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 25px;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #E6E6FA;
+            font-weight: 500;
+        }
+
+        .chip:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .chip.active {
+            background: linear-gradient(135deg, #FF1493, #00CED1);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        .wishlist-item {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 18px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .wishlist-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(5px);
+        }
+
+        .item-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #FFFFFF;
+            font-size: 16px;
+        }
+
+        .item-brand {
+            font-size: 14px;
+            opacity: 0.8;
+            color: #B8B8D4;
+        }
+
+        .remove-btn {
+            background: rgba(255, 107, 107, 0.2);
+            border: none;
+            color: #ff6b6b;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 107, 107, 0.4);
+            transform: scale(1.05);
+        }
+
+        .profile-section {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #FFD700, #FF1493, #00CED1);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 10px 30px rgba(255, 20, 147, 0.3);
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #FFFFFF;
+        }
+
+        .profile-bio {
+            opacity: 0.8;
+            color: #E6E6FA;
+            font-size: 15px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px 15px;
+            border-radius: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .stat:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-3px);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.8;
+            color: #B8B8D4;
+            font-weight: 500;
+        }
+
+        .trending-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 18px;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .trending-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(8px);
+        }
+
+        .trending-number {
+            font-size: 20px;
+            font-weight: 800;
+            color: #FFD700;
+            min-width: 35px;
+        }
+
+        .trending-info .item-name {
+            font-size: 17px;
+            margin-bottom: 4px;
+        }
+
+        .trending-info .item-brand {
+            color: #00CED1;
+            font-weight: 500;
+        }
+
+        .floating-action {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, #FF1493, #00CED1);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(255, 20, 147, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .floating-action:hover {
+            transform: scale(1.15) rotate(15deg);
+            box-shadow: 0 20px 40px rgba(255, 20, 147, 0.6);
+        }
+
+        .notification {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            color: #1a1a2e;
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateX(-50%) translateY(-100%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            font-weight: 600;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .style-progress {
+            margin: 20px 0;
+        }
+
+        .progress-item {
+            margin-bottom: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            color: #E6E6FA;
+            font-weight: 600;
+        }
+
+        .progress-value {
+            color: #FFD700;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="logo">StyleFinder</div>
+            <div class="tagline">Discover Your Perfect Style</div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('discover')">Discover</button>
+            <button class="nav-tab" onclick="showTab('trending')">Trending</button>
+            <button class="nav-tab" onclick="showTab('wishlist')">Wishlist</button>
+            <button class="nav-tab" onclick="showTab('profile')">Profile</button>
+        </div>
+
+        <div class="content">
+            <!-- Discover Tab -->
+            <div id="discover" class="tab-content active">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search styles, brands, colors...">
+                </div>
+                
+                <div class="filter-chips">
+                    <div class="chip active" onclick="toggleChip(this)">Casual</div>
+                    <div class="chip" onclick="toggleChip(this)">Formal</div>
+                    <div class="chip" onclick="toggleChip(this)">Summer</div>
+                    <div class="chip" onclick="toggleChip(this)">Trendy</div>
+                </div>
+
+                <div class="outfit-card" onclick="showNotification('Added to wishlist!')">
+                    <div class="outfit-image" style="background-image: url('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=200&fit=crop&crop=center');">
+                        <div class="outfit-overlay"></div>
+                    </div>
+                    <div class="outfit-content">
+                        <div class="outfit-header">
+                            <div class="outfit-title">Summer Vibes</div>
+                            <div class="price">$89</div>
+                        </div>
+                        <div class="outfit-items">
+                            <div class="item">Floral Dress</div>
+                            <div class="item">Sandals</div>
+                            <div class="item">Sun Hat</div>
+                            <div class="item">Sunglasses</div>
+                        </div>
+                        <div class="rating">
+                            <span class="stars">★★★★★</span>
+                            <span>4.8 (124 reviews)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="outfit-card" onclick="showNotification('Added to wishlist!')">
+                    <div class="outfit-image" style="background-image: url('https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=400&h=200&fit=crop&crop=center');">
+                        <div class="outfit-overlay"></div>
+                    </div>
+                    <div class="outfit-content">
+                        <div class="outfit-header">
+                            <div class="outfit-title">Business Chic</div>
+                            <div class="price">$156</div>
+                        </div>
+                        <div class="outfit-items">
+                            <div class="item">Blazer</div>
+                            <div class="item">Trousers</div>
+                            <div class="item">Heels</div>
+                            <div class="item">Handbag</div>
+                        </div>
+                        <div class="rating">
+                            <span class="stars">★★★★☆</span>
+                            <span>4.6 (89 reviews)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="outfit-card" onclick="showNotification('Added to wishlist!')">
+                    <div class="outfit-image" style="background-image: url('https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=200&fit=crop&crop=center');">
+                        <div class="outfit-overlay"></div>
+                    </div>
+                    <div class="outfit-content">
+                        <div class="outfit-header">
+                            <div class="outfit-title">Street Style</div>
+                            <div class="price">$73</div>
+                        </div>
+                        <div class="outfit-items">
+                            <div class="item">Denim Jacket</div>
+                            <div class="item">Skinny Jeans</div>
+                            <div class="item">Sneakers</div>
+                            <div class="item">Crossbody Bag</div>
+                        </div>
+                        <div class="rating">
+                            <span class="stars">★★★★★</span>
+                            <span>4.9 (203 reviews)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trending Tab -->
+            <div id="trending" class="tab-content">
+                <h3 style="margin-bottom: 25px; text-align: center; color: #FFFFFF; font-size: 22px;">What's Hot Right Now</h3>
+                
+                <div class="trending-item">
+                    <div class="trending-number">#1</div>
+                    <div class="trending-info">
+                        <div class="item-name">Oversized Blazers</div>
+                        <div class="item-brand">+47% searches this week</div>
+                    </div>
+                </div>
+
+                <div class="trending-item">
+                    <div class="trending-number">#2</div>
+                    <div class="trending-info">
+                        <div class="item-name">Chunky Sneakers</div>
+                        <div class="item-brand">+32% searches this week</div>
+                    </div>
+                </div>
+
+                <div class="trending-item">
+                    <div class="trending-number">#3</div>
+                    <div class="trending-info">
+                        <div class="item-name">Vintage Denim</div>
+                        <div class="item-brand">+28% searches this week</div>
+                    </div>
+                </div>
+
+                <div class="trending-item">
+                    <div class="trending-number">#4</div>
+                    <div class="trending-info">
+                        <div class="item-name">Midi Skirts</div>
+                        <div class="item-brand">+25% searches this week</div>
+                    </div>
+                </div>
+
+                <div class="trending-item">
+                    <div class="trending-number">#5</div>
+                    <div class="trending-info">
+                        <div class="item-name">Statement Earrings</div>
+                        <div class="item-brand">+19% searches this week</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wishlist Tab -->
+            <div id="wishlist" class="tab-content">
+                <h3 style="margin-bottom: 25px; text-align: center; color: #FFFFFF; font-size: 22px;">My Wishlist</h3>
+                
+                <div class="wishlist-item">
+                    <div class="item-image" style="background-image: url('https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=70&h=70&fit=crop&crop=center');"></div>
+                    <div class="item-info">
+                        <div class="item-name">Floral Maxi Dress</div>
+                        <div class="item-brand">Zara - $45</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromWishlist(this)">×</button>
+                </div>
+
+                <div class="wishlist-item">
+                    <div class="item-image" style="background-image: url('https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=70&h=70&fit=crop&crop=center');"></div>
+                    <div class="item-info">
+                        <div class="item-name">Black Stilettos</div>
+                        <div class="item-brand">H&M - $32</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromWishlist(this)">×</button>
+                </div>
+
+                <div class="wishlist-item">
+                    <div class="item-image" style="background-image: url('https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=70&h=70&fit=crop&crop=center');"></div>
+                    <div class="item-info">
+                        <div class="item-name">Leather Handbag</div>
+                        <div class="item-brand">Mango - $78</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromWishlist(this)">×</button>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profile" class="tab-content">
+                <div class="profile-section">
+                    <div class="profile-avatar">✨</div>
+                    <div class="profile-name">Fashion Lover</div>
+                    <div class="profile-bio">Style is a way to say who you are</div>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat">
+                        <div class="stat-number">47</div>
+                        <div class="stat-label">Outfits</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">23</div>
+                        <div class="stat-label">Wishlist</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">156</div>
+                        <div class="stat-label">Following</div>
+                    </div>
+                </div>
+
+                <div class="outfit-card">
+                    <div class="outfit-content">
+                        <div class="outfit-title" style="margin-bottom: 20px;">Your Style DNA</div>
+                        <div class="style-progress">
+                            <div class="progress-item">
+                                <div class="progress-header">
+                                    <span class="progress-label">Casual</span>
+                                    <span class="progress-value">76%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="background: linear-gradient(45deg, #FF1493, #FFD700); width: 76%;"></div>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <div class="progress-header">
+                                    <span class="progress-label">Formal</span>
+                                    <span class="progress-value">43%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="background: linear-gradient(45deg, #00CED1, #FF1493); width: 43%;"></div>
+                                </div>
+                            </div>
+                            <div class="progress-item">
+                                <div class="progress-header">
+                                    <span class="progress-label">Trendy</span>
+                                    <span class="progress-value">89%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="background: linear-gradient(45deg, #FFD700, #00CED1); width: 89%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-action" onclick="showNotification('Feature coming soon!')" title="Create new outfit">+</button>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked nav tab
+            event.target.classList.add('active');
+        }
+
+        function toggleChip(chip) {
+            chip.classList.toggle('active');
+        }
+
+        function removeFromWishlist(button) {
+            const item = button.closest('.wishlist-item');
+            item.style.animation = 'slideOut 0.4s ease-out forwards';
+            setTimeout(() => {
+                item.remove();
+                showNotification('Removed from wishlist');
+            }, 400);
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2500);
+        }
+
+        // Enhanced interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enhanced card hover effects
+            const cards = document.querySelectorAll('.outfit-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Enhanced search input effects
+            const searchInput = document.querySelector('.search-input');
+            searchInput.addEventListener('focus', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.12)';
+                this.style.borderColor = 'rgba(255, 20, 147, 0.5)';
+                this.style.boxShadow = '0 0 20px rgba(255, 20, 147, 0.2)';
+            });
+            
+            searchInput.addEventListener('blur', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.08)';
+                this.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                this.style.boxShadow = 'none';
+            });
+
+            // Animate progress bars when profile tab is shown
+            const profileTab = document.querySelector('[onclick="showTab(\'profile\')"]');
+            profileTab.addEventListener('click', function() {
+                setTimeout(() => {
+                    const progressBars = document.querySelectorAll('.progress-fill');
+                    progressBars.forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => {
+                            bar.style.width = width;
+                        }, 200);
+                    });
+                }, 100);
+            });
+        });
+
+        // Enhanced slide out animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    transform: translateX(-100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
