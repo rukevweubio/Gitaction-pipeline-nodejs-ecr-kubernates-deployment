@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Example CloudFormation template with VPC, Subnet, IGW, Route, Security Group, and EC2
+
+Parameters:
+  AvailabilityZone:
+    Type: String
+    Description: The availability zone for the subnet
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-west-1a
+      - ap-south-1a
+    Default: us-east-1a
+
+  VpcCidr:
+    Type: String
+    Description: CIDR block for the VPC
+    AllowedValues:
+      - 10.0.0.0/16
+      - 10.0.1.0/16
+    Default: 10.0.0.0/16
+
+  SubnetCidr:
+    Type: String
+    Description: CIDR block for the subnet
+    Default: 10.0.1.0/24
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: MyVPC
+
+  MySubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref SubnetCidr
+      AvailabilityZone: !Ref AvailabilityZone
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: MySubnet
+
+  MyInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: MyIGW
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternetGateway
+
+  MyRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyRouteTable
+
+  MyRoute:
+    Type: AWS::EC2::Route
+    DependsOn: MyInternetGateway
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternetGateway
+
+  MySubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MySubnet
+      RouteTableId: !Ref MyRouteTable
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and SSH
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: MyInstanceSG
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0a70b9d193ae8a799 # Update if needed
+      InstanceType: t3.medium
+      KeyName: MyKeyPair # Replace with an existing keypair name
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref MySubnet
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+
+Outputs:
+  InstanceId:
+    Description: The ID of the EC2 instance
+    Value: !Ref MyInstance
+    Export:
+      Name: MyInstanceId
+
+  InstancePublicIP:
+    Description: The public IP address of the EC2 instance
+    Value: !GetAtt MyInstance.PublicIp
+    Export:
+      Name: MyInstancePublicIP
+
+  InstanceSecurityGroupId:
+    Description: The ID of the security group attached to the instance
+    Value: !Ref InstanceSecurityGroup
+    Export:
+      Name: MyInstanceSGId
