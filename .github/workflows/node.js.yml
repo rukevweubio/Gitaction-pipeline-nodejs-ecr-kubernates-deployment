@@ -102,16 +102,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # 1️⃣3️⃣ Login to AWS ECR
-      - name: Login to AWS ECR
-        run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPO }}
+      # # 1️⃣3️⃣ Login to AWS ECR
+      # - name: Login to AWS ECR
+      #   run: |
+      #     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPO }}
 
-      # 1️⃣4️⃣ Tag & Push Docker image to ECR
-      - name: Tag & Push Docker image to ECR
-        run: |
-          docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ env.ECR_REPO }}:latest
-          docker push ${{ env.ECR_REPO }}:latest
+      # # 1️⃣4️⃣ Tag & Push Docker image to ECR
+      # - name: Tag & Push Docker image to ECR
+      #   run: |
+      #     docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ env.ECR_REPO }}:latest
+      #     docker push ${{ env.ECR_REPO }}:latest
 
       # 1️⃣5️⃣ Configure kubeconfig
       - name: Configure kubeconfig
