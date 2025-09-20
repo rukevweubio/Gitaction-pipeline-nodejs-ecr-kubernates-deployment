@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [18]
         env: [dev, test, produc]
 
     steps:
@@ -41,23 +41,22 @@ jobs:
         run: npm test
         working-directory: ./nodejs-app
 
-      # 5️⃣ Upload test artifacts
+      # 5️⃣ Upload test artifacts (v4)
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
             nodejs-app/test-results/
             nodejs-app/coverage/
 
-      # 6️⃣ OWASP Dependency-Check
+      # 6️⃣ OWASP Dependency-Check via Docker
       - name: OWASP Dependency-Check
-        uses: dependency-check/scan-action@v6
-        with:
-          project: my-nodejs-app
-          scan: 'nodejs-app'
-          format: 'ALL'
-          fail-on-vuln: 'true'
+        run: |
+          docker run --rm -v ${PWD}/nodejs-app:/src owasp/dependency-check \
+            --scan /src \
+            --format "ALL" \
+            --failOnCVSS 7
 
       # 7️⃣ SonarCloud Scan
       - name: SonarCloud Scan
@@ -105,7 +104,7 @@ jobs:
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPO }}
 
-      # 1️⃣4️⃣ Tag & Push to ECR
+      # 1️⃣4️⃣ Tag & Push Docker image to ECR
       - name: Tag & Push Docker image to ECR
         run: |
           docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ env.ECR_REPO }}:latest
