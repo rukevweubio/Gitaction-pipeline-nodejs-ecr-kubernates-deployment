@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Example CloudFormation template with VPC, Subnet, IGW, Route, Security Group, and EC2
+Description: CloudFormation template with VPC, Subnet, IGW, Route, Security Group, and EC2 using a new key pair
 
 Parameters:
   AvailabilityZone:
@@ -100,15 +100,20 @@ Resources:
         - Key: Name
           Value: MyInstanceSG
 
+  # MyKeyPair:
+  #   Type: AWS::EC2::KeyPair
+  #   Properties:
+  #     KeyName: MyKeyPair
+
   MyInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0a70b9d193ae8a799 # Update if needed
+      ImageId: ami-0360c520857e3138f
       InstanceType: t3.medium
-      KeyName: MyKeyPair # Replace with an existing keypair name
+      KeyName: nodejs-app-key
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
-      SubnetId: !Ref MySubnet
+      SubnetId: !Ref MySubnet 
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash

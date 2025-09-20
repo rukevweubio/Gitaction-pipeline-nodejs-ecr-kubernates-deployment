@@ -1,4 +1,4 @@
-name: Node.js CI/CD pipeline with Docker, ECR, SonarQube, and OWASP
+name: Node.js CI/CD pipeline with Docker, ECR, SonarCloud, OWASP, and K8s
 
 on:
   push:
@@ -8,13 +8,16 @@ env:
   DOCKER_IMAGE: my-nodejs-app
   DOCKER_REGISTRY: docker.io
   ECR_REPOSITORY: my-nodejsapp
+  erc_repo: 714748322187.dkr.ecr.us-east-1.amazonaws.com/nodejs-app
+  KUBECONFIG_PATH: ${{ secrets.KUBECONFIG }}
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
+        env: [dev, test, produc]
 
     steps:
       - name: Checkout code
@@ -27,12 +30,15 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
+        working-directory: ./nodejs-app
         run: npm install
 
       - name: Run tests
+        working-directory: ./nodejs-app
         run: npm test
 
       - name: Upload test artifacts
+        working-directory: ./nodejs-app
         uses: actions/upload-artifact@v3
         with:
           name: test-results
@@ -40,14 +46,8 @@ jobs:
             test-results/
             coverage/
 
-      - name: Trivy scan Docker image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.DOCKER_IMAGE }}:latest
-          format: 'table'
-          exit-code: '1'
-
       - name: OWASP Dependency-Check
+        working-directory: ./nodejs-app
         uses: dependency-check/scan-action@v6
         with:
           project: my-nodejs-app
@@ -55,31 +55,38 @@ jobs:
           format: 'ALL'
           fail-on-vuln: 'true'
 
-     
-      - name: SonarQube Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          projectBaseDir: .
-          organization: ${{ secrets.SONAR_ORG }}
-          token: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        working-directory: ./nodejs-app
+        run: |
+          npm install -g sonar-scanner
+          sonar-scanner \
+            -Dsonar.projectKey=rukevweubio_Gitaction-pipeline-nodejs-ecr-kubernates-deployment \
+            -Dsonar.organization=rukevweubio-1 \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-    
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
+        working-directory: ./nodejs-app
         run: docker build -t ${{ env.DOCKER_IMAGE }} .
 
-      - name: Tag Docker image for Docker Hub
-        run: docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ secrets.DOCKERHUB_USERNAME }}/my-nodejsapp:latest
+      - name: Trivy scan Docker image
+        working-directory: ./nodejs-app
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_IMAGE }}:latest
+          format: 'table'
+          exit-code: '1'
 
-      - name: Push Docker image to Docker Hub
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-nodejsapp:latest
+      - name: Tag & Push Docker image to Docker Hub
+        working-directory: ./nodejs-app
+        run: |
+          docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ secrets.DOCKERHUB_USERNAME }}/my-nodejsapp:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-nodejsapp:latest
 
-    
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -89,10 +96,33 @@ jobs:
 
       - name: Login to AWS ECR
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 714748322187.dkr.ecr.us-east-1.amazonaws.com
 
-      - name: Tag Docker image for ECR
-        run: docker tag ${{ env.DOCKER_IMAGE }}:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
+      - name: Tag & Push Docker image to ECR
+        working-directory: ./nodejs-app
+        run: |
+          docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ env.erc_repo }}:latest
+          docker push ${{ env.erc_repo }}:latest
 
-      - name: Push Docker image to ECR
-        run: docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
+      - name: Configure kubeconfig
+        run: |
+          echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG_PATH
+          export KUBECONFIG=$KUBECONFIG_PATH
+          kubectl config view
+
+      - name: Set namespace
+        run: |
+          if [ "${{ matrix.env }}" == "dev" ]; then
+            NAMESPACE="runner-dev"
+          elif [ "${{ matrix.env }}" == "test" ]; then
+            NAMESPACE="runner-test"
+          else
+            NAMESPACE="runner-produc"
+          fi
+          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+
+      - name: Deploy to Kubernetes
+        run: |
+          sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/my-nodejsapp:latest|g" k8s/deployment.yaml
+          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+          kubectl rollout status deployment/myapp -n $NAMESPACE
