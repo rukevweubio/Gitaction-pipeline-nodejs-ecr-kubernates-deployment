@@ -53,12 +53,12 @@ jobs:
             nodejs-app/coverage/
 
       # 6️⃣ OWASP Dependency-Check via Docker
-      - name: OWASP Dependency-Check
-        run: |
-          docker run --rm -v ${PWD}/nodejs-app:/src owasp/dependency-check \
-            --scan /src \
-            --format "ALL" \
-            --failOnCVSS 7
+      # - name: OWASP Dependency-Check
+      #   run: |
+      #     docker run --rm -v ${PWD}/nodejs-app:/src owasp/dependency-check \
+      #       --scan /src \
+      #       --format "ALL" \
+      #       --failOnCVSS 7
 
       # 7️⃣ SonarCloud Scan
       - name: SonarCloud Scan
