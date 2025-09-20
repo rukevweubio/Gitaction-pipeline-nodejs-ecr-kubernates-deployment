@@ -119,7 +119,7 @@ jobs:
             echo "${{ secrets.KUBECONFIG }}" > "$KUBECONFIG_PATH"
             export KUBECONFIG="$KUBECONFIG_PATH"
             kubectl config view
-
+ cat 
 
       # 1️⃣6️⃣ Set namespace
       - name: Set namespace
