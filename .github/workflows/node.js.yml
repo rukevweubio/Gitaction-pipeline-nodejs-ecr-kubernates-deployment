@@ -116,9 +116,10 @@ jobs:
       # 1️⃣5️⃣ Configure kubeconfig
       - name: Configure kubeconfig
         run: |
-          echo "${{ secrets.KUBECONFIG }}" > $KUBECONFIG_PATH
-          export KUBECONFIG=$KUBECONFIG_PATH
-          kubectl config view
+            echo "${{ secrets.KUBECONFIG }}" > "$KUBECONFIG_PATH"
+            export KUBECONFIG="$KUBECONFIG_PATH"
+            kubectl config view
+
 
       # 1️⃣6️⃣ Set namespace
       - name: Set namespace
