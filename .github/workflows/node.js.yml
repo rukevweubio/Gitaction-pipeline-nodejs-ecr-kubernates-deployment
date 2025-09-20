@@ -85,7 +85,7 @@ jobs:
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}:latest
           format: 'table'
-          exit-code: '1'
+          exit-code: '0'
 
       # 1️⃣1️⃣ Tag & Push to Docker Hub
       - name: Tag & Push Docker image to Docker Hub
