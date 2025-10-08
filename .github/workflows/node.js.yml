@@ -7,6 +7,9 @@ on:
 env:
   DOCKER_IMAGE: my-nodejs-app
   DOCKER_REGISTRY: docker.io
+  ECR_REPOSITORY: my-nodejsapp
+  ECR_REPO: 714748322187.dkr.ecr.us-east-1.amazonaws.com/nodejs-app
+  KUBECONFIG_PATH: ${{ secrets.KUBECONFIG }}
 
 jobs:
   build-and-deploy:
@@ -14,11 +17,14 @@ jobs:
     strategy:
       matrix:
         node-version: [18]
+      
 
     steps:
+      #  Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Node.js
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -26,14 +32,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: nodejs-app/package-lock.json
 
+
+      #  Install dependencies
       - name: Install dependencies
         run: npm install
         working-directory: ./nodejs-app
 
+      #  Run tests
       - name: Run tests
         run: npm test
         working-directory: ./nodejs-app
 
+      # Upload test artifacts (v4)
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         with:
