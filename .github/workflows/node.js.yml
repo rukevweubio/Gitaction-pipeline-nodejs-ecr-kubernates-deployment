@@ -7,9 +7,6 @@ on:
 env:
   DOCKER_IMAGE: my-nodejs-app
   DOCKER_REGISTRY: docker.io
-  ECR_REPOSITORY: my-nodejsapp
-  ECR_REPO: 714748322187.dkr.ecr.us-east-1.amazonaws.com/nodejs-app
-  KUBECONFIG_PATH: ${{ secrets.KUBECONFIG }}
 
 jobs:
   build-and-deploy:
@@ -17,14 +14,11 @@ jobs:
     strategy:
       matrix:
         node-version: [18]
-        env: [dev, test, produc]
 
     steps:
-      #  Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up Node.js
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -32,18 +26,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: nodejs-app/package-lock.json
 
-
-      #  Install dependencies
       - name: Install dependencies
         run: npm install
         working-directory: ./nodejs-app
 
-      #  Run tests
       - name: Run tests
         run: npm test
         working-directory: ./nodejs-app
 
-      # Upload test artifacts (v4)
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -52,15 +42,6 @@ jobs:
             nodejs-app/test-results/
             nodejs-app/coverage/
 
-      # OWASP Dependency-Check via Docker
-      # - name: OWASP Dependency-Check
-      #   run: |
-      #     docker run --rm -v ${PWD}/nodejs-app:/src owasp/dependency-check \
-      #       --scan /src \
-      #       --format "ALL" \
-      #       --failOnCVSS 7
-
-      #  SonarCloud Scan
       - name: SonarCloud Scan
         run: |
           npm install -g sonar-scanner
@@ -71,15 +52,12 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      #  Docker Hub login
       - name: Log in to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      #  Build Docker image
       - name: Build Docker image
-        run: docker build -t ${{ env.DOCKER_IMAGE }} ./nodejs-app
+        run: docker build -t ${{ env.DOCKER_IMAGE }}:latest ./nodejs-app
 
-      # Trivy scan
       - name: Trivy scan Docker image
         uses: aquasecurity/trivy-action@master
         with:
@@ -87,55 +65,9 @@ jobs:
           format: 'table'
           exit-code: '0'
 
-      #  Tag & Push to Docker Hub
       - name: Tag & Push Docker image to Docker Hub
         run: |
           docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ secrets.DOCKER_USERNAME }}/my-nodejsapp:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/my-nodejsapp:latest
 
-
-      # Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      # #  Login to AWS ECR
-      # - name: Login to AWS ECR
-      #   run: |
-      #     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ env.ECR_REPO }}
-
-      # # Tag & Push Docker image to ECR
-      # - name: Tag & Push Docker image to ECR
-      #   run: |
-      #     docker tag ${{ env.DOCKER_IMAGE }}:latest ${{ env.ECR_REPO }}:latest
-      #     docker push ${{ env.ECR_REPO }}:latest
-
-      #  Configure kubeconfig
-      - name: Configure kubeconfig
-        run: |
-            echo "${{ secrets.KUBECONFIG }}" > "$KUBECONFIG_PATH"
-            export KUBECONFIG="$KUBECONFIG_PATH"
-            kubectl config view
- 
-
-      # Set namespace
-      - name: Set namespace
-        run: |
-          if [ "${{ matrix.env }}" == "dev" ]; then
-            NAMESPACE="runner-dev"
-          elif [ "${{ matrix.env }}" == "test" ]; then
-            NAMESPACE="runner-test"
-          else
-            NAMESPACE="runner-produc"
-          fi
-          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
-
-      #  Deploy to Kubernetes
-      - name: Deploy to Kubernetes
-        run: |
-          sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/my-nodejsapp:latest|g" k8s/deployment.yaml
-          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
-          kubectl rollout status deployment/myapp -n $NAMESPACE
+      
