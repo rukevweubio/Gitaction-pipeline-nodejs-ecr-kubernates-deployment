@@ -25,7 +25,7 @@ spec:
               service:
                 name: springboot-service
                 port:
-                  number: 80
+                  number: 8080
   # Optional TLS
   # tls:
   #   - hosts:
