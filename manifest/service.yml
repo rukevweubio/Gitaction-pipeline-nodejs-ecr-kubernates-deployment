@@ -4,7 +4,7 @@ metadata:
   name: my-nodejs-app-service
   namespace: dev 
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: my-nodejs-app
   ports:
